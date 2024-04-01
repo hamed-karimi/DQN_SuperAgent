@@ -42,22 +42,23 @@ class Agent:
     def get_action(self, state: list, episode, epsilon=None):
         env_map = np.array(state[0])
         goal_map = np.zeros_like(env_map[0, :, :])
-        epsilon = self.epsilon if epsilon is None else epsilon
+        policy_net_goal_map = np.zeros_like(env_map[0, :, :])
+        goal_location = self.get_policy_net_goal_map(state)
+        policy_net_goal_map[goal_location[0], goal_location[1]] = 1
+
+        epsilon = self._get_epsilon(episode=episode) if epsilon is None else epsilon
         if random.random() < epsilon:  # random action
             all_object_locations = np.stack(np.where(env_map), axis=1)
             goal_index = np.random.randint(low=0, high=all_object_locations.shape[0], size=())
             goal_location = all_object_locations[goal_index, 1:]
 
-        else:
-            goal_location = self.get_policy_net_goal_map(state)
-
         goal_map[goal_location[0], goal_location[1]] = 1
-        self._update_epsilon(episode=episode)
-        return goal_map
+        return goal_map, policy_net_goal_map
 
-    def _update_epsilon(self, episode):
+    def _get_epsilon(self, episode):
         epsilon_length = self.epsilon_range[0] - self.epsilon_range[1]
-        self.epsilon = self.epsilon_range[0] - (episode / self.params.EPISODE_NUM) * epsilon_length
+        epsilon = self.epsilon_range[0] - (episode / self.params.EPISODE_NUM) * epsilon_length
+        return epsilon
 
     def _get_goal_location_from_values(self, values, env_map: torch.Tensor):
         goal_values = values.reshape(self.params.HEIGHT, self.params.WIDTH).clone()

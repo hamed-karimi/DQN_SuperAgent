@@ -31,12 +31,10 @@ class Train:
             episode_loss = 0
             for step in range(self.step_num):
                 test_environment = deepcopy(environment)
-
-                goal_map = agent.get_action(state=state, episode=episode)
-                test_goal_map = agent.get_policy_net_goal_map(state=state)
+                goal_map, dqn_goal_map = agent.get_action(state=state, episode=episode)
 
                 new_state, reward, terminated, truncated, _ = environment.step(goal_map)
-                _, test_reward, _, _, _ = test_environment.step(test_goal_map)
+                _, test_reward, _, _, _ = test_environment.step(dqn_goal_map)
 
                 # ('init_state', 'goal_map', 'reward', 'next_state')
                 agent.save_experience(state, goal_map, reward, new_state)

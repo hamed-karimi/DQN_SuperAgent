@@ -25,6 +25,20 @@ class Agent:
         self.optimizer = optim.RMSprop(self.policy_net.parameters(), lr=params.INIT_LEARNING_RATE)
         self.memory = ReplayMemory(capacity=self.params.MEMORY_CAPACITY)
 
+    def get_policy_net_goal_map(self, state):
+        env_map = np.array(state[0])
+        mental_state = torch.Tensor(state[1]).unsqueeze(dim=0)
+        mental_state_slope = torch.Tensor(state[2]).unsqueeze(dim=0)
+        object_reward = torch.Tensor(state[3]).unsqueeze(dim=0)
+        with torch.no_grad():
+            goal_values = self.policy_net(env_map=torch.Tensor(env_map).unsqueeze(dim=0),
+                                          mental_states=mental_state,
+                                          states_params=torch.concat([mental_state_slope, object_reward], dim=1))
+            goal_values = goal_values.cpu()
+        goal_location = self._get_goal_location_from_values(values=goal_values, env_map=torch.tensor(env_map))
+
+        return goal_location
+
     def get_action(self, state: list, episode, epsilon=None):
         env_map = np.array(state[0])
         goal_map = np.zeros_like(env_map[0, :, :])
@@ -35,15 +49,7 @@ class Agent:
             goal_location = all_object_locations[goal_index, 1:]
 
         else:
-            mental_state = torch.Tensor(state[1]).unsqueeze(dim=0)
-            mental_state_slope = torch.Tensor(state[2]).unsqueeze(dim=0)
-            object_reward = torch.Tensor(state[3]).unsqueeze(dim=0)
-            with torch.no_grad():
-                goal_values = self.policy_net(env_map=torch.Tensor(env_map).unsqueeze(dim=0),
-                                              mental_states=mental_state,
-                                              states_params=torch.concat([mental_state_slope, object_reward], dim=1))
-                goal_values = goal_values.cpu()
-            goal_location = self._get_goal_location_from_values(values=goal_values, env_map=torch.tensor(env_map))
+            goal_location = self.get_policy_net_goal_map(state)
 
         goal_map[goal_location[0], goal_location[1]] = 1
         self._update_epsilon(episode=episode)

@@ -1,5 +1,6 @@
 import os.path
 import shutil
+from copy import deepcopy
 from Agent import Agent
 from torch.utils.tensorboard import SummaryWriter
 from Environment import Environment
@@ -26,19 +27,27 @@ class Train:
         for episode in range(self.episode_num):
             state, _ = environment.reset()
             episode_reward = 0
+            dqn_reward = 0
             episode_loss = 0
             for step in range(self.step_num):
+                test_environment = deepcopy(environment)
+
                 goal_map = agent.get_action(state=state, episode=episode)
+                test_goal_map = agent.get_policy_net_goal_map(state=state)
+
                 new_state, reward, terminated, truncated, _ = environment.step(goal_map)
+                _, test_reward, _, _, _ = test_environment.step(test_goal_map)
 
                 # ('init_state', 'goal_map', 'reward', 'next_state')
                 agent.save_experience(state, goal_map, reward, new_state)
                 episode_reward += reward
+                dqn_reward += test_reward
                 episode_loss += agent.optimize()
                 if episode % self.params.UPDATE_TARGET_NET:
                     agent.update_target_net()
 
             self.tensor_writer.add_scalar("Loss", episode_loss / self.step_num, episode)
             self.tensor_writer.add_scalar("Reward", episode_reward / self.step_num, episode)
+            self.tensor_writer.add_scalar("DQN Reward", dqn_reward / self.step_num, episode)
 
         agent.save(self.res_folder)

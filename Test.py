@@ -168,3 +168,12 @@ class Test:
         agent = Agent(params)
         agent.policy_net.load_state_dict(model_parameters)
         return agent
+
+    # @staticmethod
+    # def get_qfunction_selected_goal_map(state,
+    #                                     agent: Agent):
+    #
+    #     goal_map, goal_location = agent.get_action(state=state, episode=0, epsilon=-1)  # get the goal map based on Q-values
+    #     new_state, reward, terminated, truncated, _ = environment.step(goal_map)
+    #
+    #     return torch.tensor(rho).mean()

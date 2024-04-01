@@ -28,7 +28,7 @@ class DQN(nn.Module):
 
         env_layer_num = self.params.OBJECT_TYPE_NUM + 1  # +1 for agent layer
 
-        kernel_size = 1
+        kernel_size = 2
         self.conv = nn.Sequential(nn.Conv2d(in_channels=env_layer_num,
                                             out_channels=128,
                                             kernel_size=kernel_size), nn.ReLU(),
@@ -37,10 +37,7 @@ class DQN(nn.Module):
                                             kernel_size=kernel_size + 1), nn.ReLU(),
                                   nn.Conv2d(in_channels=64,
                                             out_channels=64,
-                                            kernel_size=kernel_size + 2),
-                                  nn.Conv2d(in_channels=64,
-                                            out_channels=64,
-                                            kernel_size=kernel_size + 3), nn.ReLU()
+                                            kernel_size=kernel_size + 2), nn.ReLU()
                                   ).to(self.device)
         each_channel_size = params.WIDTH - kernel_size - (kernel_size + 1) - (kernel_size + 2) - (kernel_size + 3) + 4
         self.linear = nn.Linear(in_features=64 * each_channel_size ** 2,

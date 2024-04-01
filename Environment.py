@@ -63,8 +63,8 @@ class Environment(gym.Env):
     def step(self, goal_map):
         self._goal_selection_step += 1
         goal_location = np.argwhere(goal_map).flatten()  # location of 1 in map
-        step_length = self._get_agent_distance_to_location(goal_location[0], goal_location[1])
-
+        diagonal_steps, straight_steps = self._get_agent_distance_to_location(goal_location[0], goal_location[1])
+        step_length = math.sqrt(2) * diagonal_steps + straight_steps
         self._update_agent_locations(goal_location)
         dt = np.array(1) if step_length < 1.4 else step_length
         object_reward = self._env_map[1:,
@@ -72,7 +72,7 @@ class Environment(gym.Env):
                         self._agent_location[1]] * self._environment_object_reward
         self._update_object_locations()
 
-        mental_states_cost = self._total_positive_mental_states()
+        mental_states_cost = self._get_mental_states_cost(diagonal_steps, straight_steps)
         self._update_mental_state_after_step(dt=dt)
 
         positive_mental_states_before_reward = self._total_positive_mental_states()
@@ -91,6 +91,20 @@ class Environment(gym.Env):
 
     def render(self):
         return None
+
+    def _get_mental_states_cost(self, diagonal_steps, straight_steps):
+        cost = self._total_positive_mental_states()
+        mental_states = self._mental_states.copy()
+
+        for step in range(diagonal_steps):
+            mental_states += math.sqrt(2) * self._mental_states_slope
+            cost += np.maximum(0, mental_states).sum()
+
+        for step in range(straight_steps):
+            mental_states += self._mental_states_slope
+            cost += np.maximum(0, mental_states).sum()
+
+        return cost
 
     def _get_observation(self):
         observation = [self._env_map.copy(), self._mental_states.copy()]
@@ -119,7 +133,8 @@ class Environment(gym.Env):
         max_dis = max(dx, dy)
         diagonal_steps = min_dis
         straight_steps = max_dis - min_dis
-        return math.sqrt(2) * diagonal_steps + straight_steps
+        # return math.sqrt(2) * diagonal_steps + straight_steps
+        return diagonal_steps, straight_steps
 
     def _total_positive_mental_states(self):
         total_need = np.maximum(0, self._mental_states).sum()

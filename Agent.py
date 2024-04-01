@@ -42,6 +42,7 @@ class Agent:
                 goal_values = self.policy_net(env_map=torch.Tensor(env_map).unsqueeze(dim=0),
                                               mental_states=mental_state,
                                               states_params=torch.concat([mental_state_slope, object_reward], dim=1))
+                goal_values = goal_values.cpu()
             goal_location = self._get_goal_location_from_values(values=goal_values, env_map=torch.tensor(env_map))
 
         goal_map[goal_location[0], goal_location[1]] = 1
@@ -100,10 +101,10 @@ class Agent:
             next_map, \
             next_mental_state = self._get_batch_tensor(batch)
 
-        policy_net_goal_values = self.policy_net(init_map, init_mental_state, states_params)
+        policy_net_goal_values = self.policy_net(init_map, init_mental_state, states_params).cpu()
         policy_net_goal_values = policy_net_goal_values[goal_map > 0]
 
-        next_state_target_net_goal_values = self.target_net(next_map, next_mental_state, states_params)
+        next_state_target_net_goal_values = self.target_net(next_map, next_mental_state, states_params).cpu()
         next_state_target_net_goal_values[next_map.sum(dim=1) < 1] = -math.inf
         target_net_max_goal_value = torch.amax(next_state_target_net_goal_values,
                                                dim=(1, 2)).detach().float()

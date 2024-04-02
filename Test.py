@@ -121,8 +121,8 @@ class Test:
             shape_map = self.get_object_shape_dictionary(object_locations, agent_location, each_type_object_num)
 
             with torch.no_grad():
-                goal_map = self.agent.get_action(state=state, episode=0, epsilon=-1)
-                goal_location = self.get_goal_location_from_goal_map(goal_map)
+                _, policy_net_goal_map = self.agent.get_action(state=state, episode=0, epsilon=-1)
+                goal_location = self.get_goal_location_from_goal_map(policy_net_goal_map)
 
             if tuple(goal_location.tolist()) in shape_map.keys():
                 selected_goal_shape = shape_map[tuple(goal_location.tolist())]

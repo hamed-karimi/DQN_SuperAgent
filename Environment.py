@@ -93,16 +93,22 @@ class Environment(gym.Env):
         return None
 
     def _get_mental_states_cost(self, diagonal_steps, straight_steps):
-        cost = self._total_positive_mental_states()
-        mental_states = self._mental_states.copy()
+        if diagonal_steps == 0 and straight_steps == 0:  # stays
+            cost = self._total_positive_mental_states()
+            return cost
+        else:
+            cost = 0
+            mental_states = self._mental_states.copy()
 
         for step in range(diagonal_steps):
+            carried_need = np.maximum(0, mental_states).sum() * math.sqrt(2)
+            cost += carried_need
             mental_states += math.sqrt(2) * self._mental_states_slope
-            cost += np.maximum(0, mental_states).sum()
 
         for step in range(straight_steps):
+            carried_need = np.maximum(0, mental_states).sum()
+            cost += carried_need
             mental_states += self._mental_states_slope
-            cost += np.maximum(0, mental_states).sum()
 
         return cost
 

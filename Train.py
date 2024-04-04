@@ -41,7 +41,7 @@ class Train:
                 episode_reward += reward
                 dqn_reward += test_reward
                 episode_loss += agent.optimize()
-                if episode % self.params.UPDATE_TARGET_NET:
+                if episode % self.params.UPDATE_TARGET_NET == 0:
                     agent.update_target_net()
                 state = deepcopy(new_state)
             self.tensor_writer.add_scalar("Loss", episode_loss / self.step_num, episode)
